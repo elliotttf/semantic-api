@@ -1,0 +1,22 @@
+{
+  "name": "semantic-api",
+  "version": "1.0.0",
+  "description": "A guide for creating semantic versioned APIs",
+  "main": "index.js",
+  "scripts": {
+    "build": "node scripts/build"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/elliotttf/semantic-api.git"
+  },
+  "author": "Elliott Foster <elliottf@codebrews.com> (http://codebrew.com/)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/elliotttf/semantic-api/issues"
+  },
+  "homepage": "https://github.com/elliotttf/semantic-api#readme",
+  "dependencies": {
+    "markdown": "^0.5.0"
+  }
+}

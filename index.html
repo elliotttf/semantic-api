@@ -1,0 +1,114 @@
+
+<div style="padding-left: 5%;padding-right: 5%"><h1>semantic-api</h1>
+
+<h3>Intent</h3>
+
+<p>This document will describe how to version a REST API in a <a href="http://semver.org/">semantic</a>
+manner, providing predictable releases free of breaking changes. Some of the
+workflow may not line up with your individual needs, but the overall concepts
+should be widely applicable.</p>
+
+<h3>Definitions</h3>
+
+<p>The semantic version pieces that we will be discussing include the major, minor,
+and patch versions as well as prerelease tags. For these definitions, consider
+the version <code>v1.2.3-alpha.0</code>. All semantic versions in use <em>must</em> have a major,
+minor, and patch version and <em>may</em> have a prerelease tag.</p>
+
+<ul><li>Major – <code>1</code> in our example, the left-most numeral. If this number changes it
+indicates that the API has introduced breaking changes which <em>may</em> cause
+consumers to break without making code changes of their own.</li><li>Minor – <code>2</code> in our example, the second left-most numeral. If this number
+changes it indicates that new features have been added to the API. There will
+not be breaking changes for consumers but new functionality will be exposed.</li><li>Patch – <code>3</code> in our example, the third left-most numeral. If this number
+changes it indicates a bug-fix. There will not be breaking changes for
+consumers but behavior may change based on the fix.</li><li><p>Prerelease tag – <code>alpha.0</code> in our example, anything following a <code>-</code> in the
+version string. These tags will be used prior
+to a version of the API becoming stable. Consumers <em>may</em> request them but <em>must</em>
+understand the different kinds of prerelease tags and what they mean:</p><ul><li><p><code>alpha</code> – the most unstable prerelease tags. Changes between alphas <em>may</em>
+introduce breaking changes but <em>must not</em> break any previously stable
+features.</p><p>For example: renaming a field: <code>newField</code> to <code>newFields</code> between <code>alpha.0</code>
+and <code>alpha.1</code> is acceptable, but renaming <code>oldField</code> to <code>oldFields</code> between
+<code>1.2.2</code> and <code>1.2.3-alpha.0</code> is not acceptable.</p></li><li><code>beta</code> – a more stable development state. Breaking changes and new features
+<em>must not</em> be introduced at this point. Only bug fixes and refinements on
+existing features are allowed.</li><li><code>rc</code> – the most stable development state. Breaking changes, new features,
+and refinements <em>must not</em> be introduced at this point. Only bug fixes are
+allowed.</li></ul></li></ul>
+
+<h3>Release workflow</h3>
+
+<p>Development and unstable API releases will happen in <code>dev</code> environments. After
+confirmation of a feature set as “stable enough” a stable release candidate
+will be promoted to a staging environment. After confirmation of the release
+candidate, a stable version will be released to production. Conceptually this
+might look like this:</p>
+
+<ul><li>Dev<ul><li><code>v1.0.0-alpha.1</code> - needs more changes so...</li><li><code>v1.0.0-alpha.2</code> - confirmed stable enough to move forward</li></ul></li><li>Stage<ul><li><code>v1.0.0-rc.1</code> - needs more changes so…</li><li><code>v1.0.0-rc.2</code> - confirmed stable enough to move forward</li></ul></li><li>Prod<ul><li><code>v1.0.0</code> - locked version of previously most stable rc, i.e. <code>v1.0.0-rc.2</code></li></ul></li></ul>
+
+<p>If a <code>beta</code> or <code>rc</code> release is created the previously defined rules about feature
+and fix inclusion <em>must</em> be adhered to, or the <code>beta</code> or <code>rc</code> in question <em>must</em>
+be abandoned and officially unsupported.</p>
+
+<p>For example: <code>v1.2.3-alpha.5</code> introduces a new feature that is confirmed to be
+stable enough to move forward so <code>v1.2.3-beta.0</code> is cut. Later, it is decided
+a breaking change to the new feature in <code>v1.2.3-alpha.5</code> needs to be introduced
+in <code>v1.2.3</code>. At this point <code>v1.2.3-beta.0</code> <em>must</em> be removed and <code>v1.2.3-alpha.6</code>
+added.</p>
+
+<h3>Consumer request workflow</h3>
+
+<p>Consumers <em>should</em> interact with the API using <a href="https://docs.npmjs.com/getting-started/semantic-versioning">npm style</a>
+semver ranges. This gives maximum flexibility to API consumers, allowing them
+to “play it safe” and lock to a given version of the API, or provide a semver
+range which will allow subsequent versions to be received without modifying the
+consumer code.</p>
+
+<p>Consumers <em>must not</em> lock to a prerelease tag, e.g. <code>v1.2.3-rc.0</code>. The requests
+will be rejected as additional changes could be introduced before the API becomes
+stable.</p>
+
+<p>Consumers <em>may</em> request a prerelease tag with a range, e.g. <code>^v1.2.3-rc.0</code>. This
+will resolve in the way described by npm, but has some important features that
+are worth mentioning here:</p>
+
+<p>Range requests against prerelease tags will receive the next prerelease or the
+next stable version that satisfies the range.</p>
+
+<p>For example: a request for <code>^v1.2.3-alpha.1</code> will receive the following versions
+when/if they are available:
+<em> <code>v1.2.3-alpha.2</code>
+</em> <code>v1.2.3-beta.0</code>
+<em> <code>v1.2.3-rc.0</code>
+</em> <code>v1.2.3</code>
+<em> <code>v1.2.4</code>
+</em> <code>v1.3.0</code></p>
+
+<p>The same request would not receive <code>v1.3.0-alpha.0</code>, or any prereleases for that
+matter, on versions outside of the major, minor, and patch versions defined by
+the original prerelease range.</p>
+
+<p>Consumers <em>may</em> lock to a stable version or request a range from a stable version,
+e.g. <code>v1.2.3</code> and <code>^v1.2.3</code>. While <code>v1.2.3</code> is the latest stable version in the
+<code>v1</code> family, these two requests will resolve the same way. As soon as a new minor
+or patch version is added the request for <code>^v1.2.3</code> would receive the new version.</p>
+
+<h3>Server considerations</h3>
+
+<p>Implementing servers <em>should</em> provide a <code>meta</code> style attribute to all responses
+that describes the version that the request resolved to. In JSON API with a
+request for <code>/^v1.0.0/authors</code> and a highest stable version of <code>v1.2.3</code> this
+would look like this:</p>
+
+<p><code>
+{
+  “data”: [],
+  “meta” : {
+    “version”: “v1.2.3”
+  }
+}
+</code></p>
+
+<p>Implementing servers <em>should</em> enforce strict semantic version matching and
+reject any request for an invalid version. This approach is preferable over
+attempting to route invalid or partial versions (e.g. <code>v1.2</code>) to the correct
+and valid version.</p></div>
+<a href="https://github.com/elliotttf/semantic-api"><img style="position: absolute; top: 0; right: 0; border: 0;" src="https://camo.githubusercontent.com/e7bbb0521b397edbd5fe43e7f760759336b5e05f/68747470733a2f2f73332e616d617a6f6e6177732e636f6d2f6769746875622f726962626f6e732f666f726b6d655f72696768745f677265656e5f3030373230302e706e67" alt="Fork me on GitHub" data-canonical-src="https://s3.amazonaws.com/github/ribbons/forkme_right_green_007200.png"></a>
